@@ -3,7 +3,7 @@ from tqdm import tqdm
 import sys
 import os
 
-if len(sys.argv < 5):
+if len(sys.argv) < 5:
     exit("run: python analyse.py <species_1_og2genes> <species_2_og2genes> <idx_pairwise> <idx_namesMap>")
 
 species_1_file_name = sys.argv[1] # "data/species_1__odb10v0_OG2genes.tab"
@@ -12,24 +12,6 @@ species_2_file_name = sys.argv[2] #"data/species_2__odb10v0_OG2genes.tab"
 pairwise_file = sys.argv[3] #"/home/mabuelanin/Desktop/kprocessor/refseq_orthodb/skipmers_effect/idx_KMERS_SKIPMERS_species_1_species_2_.tsv"
 names_map_file = sys.argv[4] #"./KMERS_SKIPMERS/species_1_species_2_/idx_KMERS_SKIPMERS_species_1_species_2_.namesMap"
 
-result = {}
-
-#######################################################################
-#                   Parsing OrthoDB Orthologous Groups                #
-#                   OG_uq_ID	tax_id	   OG_name                    #  
-#                   0at100953	100953	Hexon protein                 #  
-#                   >>> OG2TAX[0at100953] = 100953 <<<                #
-#######################################################################
-
-# Read od_OGs
-print("Parsing odb*OGs")
-OG2tax = {}
-with open("data/odb10v0_OGs.tab", 'r') as ogs:
-    for line in ogs:
-        line = line.split("\t")
-        og = line[0]
-        tax = line[1]
-        OG2tax[og] = tax
 
 #######################################################################
 #                   Parsing kProcessor NamesMap File                  #
@@ -70,7 +52,7 @@ with open(pairwise_file) as pw:
 #######################################################################
 #                   Parsing species Ortho Group to Genes              #
 #                   ex: 0at100953	9606_0:000408                     #
-#                   gene2OGs[9606_0:000408] = 0at100953               #
+#                   gene2OGs[9606_0:000408] = [0at100953]             #
 #######################################################################
 
 gene2OGs = {}  # dict{key: odb_geneID, value: [Og_groups]}
@@ -88,9 +70,12 @@ for species_file in [species_1_file_name, species_2_file_name]:
                 gene2OGs[odb_gene_id] = [odb_gene_group]
 
 
-similarity_keys = sorted(pairwise.keys())
 relation_type = ""
 total_count = {}
+
+#######################################################################
+#                           Preparing Levels                          #
+#######################################################################
 
 levels1 = ['2759', '33208', '7742', '32523', '40674', '9347', '314146', '9443', '314295', '9604', '9606']
 levels2 = ['2759', '33208', '7742', '32523', '40674', '9347', '314146', '9443', '314294', '9544']
@@ -112,7 +97,7 @@ new_pairwise_file.write(new_pairwise_header)
 def get_tax(ogs):
     tax = []
     for og in ogs:
-        tax.append(og.split(":")[1])
+        tax.append(og.split("at")[1])
     
     return tax
 

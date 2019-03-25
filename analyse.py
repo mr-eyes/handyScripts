@@ -1,14 +1,25 @@
 import json
 from tqdm import tqdm
+import sys
+import os
 
-human_file_name = "data/human_odb10v0_OG2genes.tab"
-monkey_file_name = "data/monkey_odb10v0_OG2genes.tab"
+if len(sys.argv < 5):
+    exit("run: python analyse.py <species_1_og2genes> <species_2_og2genes> <idx_pairwise> <idx_namesMap>")
 
-pairwise_file = "/home/mabuelanin/Desktop/kprocessor/refseq_orthodb/skipmers_effect/idx_KMERS_SKIPMERS_humanMonkey.tsv"
-names_map_file = "./KMERS_SKIPMERS/humanMonkey/idx_KMERS_SKIPMERS_humanMonkey.namesMap"
+species_1_file_name = sys.argv[1] # "data/species_1__odb10v0_OG2genes.tab"
+species_2_file_name = sys.argv[2] #"data/species_2__odb10v0_OG2genes.tab"
 
-gene2OGs = {}  # dict{key: odb_geneID, value: [Og_groups]}
+pairwise_file = sys.argv[3] #"/home/mabuelanin/Desktop/kprocessor/refseq_orthodb/skipmers_effect/idx_KMERS_SKIPMERS_species_1_species_2_.tsv"
+names_map_file = sys.argv[4] #"./KMERS_SKIPMERS/species_1_species_2_/idx_KMERS_SKIPMERS_species_1_species_2_.namesMap"
+
 result = {}
+
+#######################################################################
+#                   Parsing OrthoDB Orthologous Groups                #
+#                   OG_uq_ID	tax_id	   OG_name                    #  
+#                   0at100953	100953	Hexon protein                 #  
+#                   >>> OG2TAX[0at100953] = 100953 <<<                #
+#######################################################################
 
 # Read od_OGs
 print("Parsing odb*OGs")
@@ -20,7 +31,10 @@ with open("data/odb10v0_OGs.tab", 'r') as ogs:
         tax = line[1]
         OG2tax[og] = tax
 
-# Read namesMap file
+#######################################################################
+#                   Parsing kProcessor NamesMap File                  #
+#######################################################################
+
 print("Parsing namesMap")
 names_map = {}
 with open(names_map_file) as namesMap:
@@ -30,7 +44,10 @@ with open(names_map_file) as namesMap:
         gene_id = line[1]
         names_map[gene_id] = gene_name
 
-# Read Pairwise
+#######################################################################
+#                   Parsing kCluster pairwise File                    #
+#######################################################################
+
 print("Parsing pairwise")
 pairwise = {}
 with open(pairwise_file) as pw:
@@ -42,34 +59,33 @@ with open(pairwise_file) as pw:
         gene2_id = line[1]
         gene2 = names_map[gene2_id].split("|")[0]
         similarity = float(line[-1])
+        
         if similarity not in pairwise:
             pairwise[similarity] = [[gene1, gene2]]
         else:
             pairwise[similarity].append([gene1, gene2])
 
 
-print("Parsing Human Og2genes")
-with open(human_file_name, 'r') as human:
-    for line in human:
-        line = line.strip().split("\t")
-        odb_gene_group = line[0]
-        odb_gene_id = line[1]
-        if odb_gene_id in gene2OGs:
-            gene2OGs[odb_gene_id].append(odb_gene_group)
-        else:
-            gene2OGs[odb_gene_id] = [odb_gene_group]
 
+#######################################################################
+#                   Parsing species Ortho Group to Genes              #
+#                   ex: 0at100953	9606_0:000408                     #
+#                   gene2OGs[9606_0:000408] = 0at100953               #
+#######################################################################
 
-print("Parsing Monkey Og2genes")
-with open(monkey_file_name, 'r') as monkey:
-    for line in monkey:
-        line = line.strip().split("\t")
-        odb_gene_group = line[0]
-        odb_gene_id = line[1]
-        if odb_gene_id in gene2OGs:
-            gene2OGs[odb_gene_id].append(odb_gene_group)
-        else:
-            gene2OGs[odb_gene_id] = [odb_gene_group]
+gene2OGs = {}  # dict{key: odb_geneID, value: [Og_groups]}
+
+for species_file in [species_1_file_name, species_2_file_name]:
+    print("Parsing %s" % os.path.basename(species_file))
+    with open(species_file, 'r') as species:
+        for line in species:
+            line = line.strip().split("\t")
+            odb_gene_group = line[0]
+            odb_gene_id = line[1]
+            if odb_gene_id in gene2OGs:
+                gene2OGs[odb_gene_id].append(odb_gene_group)
+            else:
+                gene2OGs[odb_gene_id] = [odb_gene_group]
 
 
 similarity_keys = sorted(pairwise.keys())
@@ -96,7 +112,7 @@ new_pairwise_file.write(new_pairwise_header)
 def get_tax(ogs):
     tax = []
     for og in ogs:
-        tax.append(OG2tax[og])
+        tax.append(og.split(":")[1])
     
     return tax
 
@@ -122,10 +138,6 @@ for sim, records in tqdm(pairwise.items()):
         
         
         matched = len(intersection) > 0
-
-        # if matched:
-        #     print (intersection)
-        #     exit()
 
         levels_alignment = [0] * len(levels)
         for i in intersection:

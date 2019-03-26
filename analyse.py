@@ -89,7 +89,8 @@ for i in range(min(len(levels1), len(levels2))):
 
 levels_col = "\t".join(["L-" + str(i) for i in range(len(levels))])
 
-new_pairwise_file = open("sk21_new_pairwise.tsv", 'w')
+output_file_name = "levels_" + os.path.basename(pairwise_file)
+new_pairwise_file = open(output_file_name, 'w')
 new_pairwise_header = "\t".join(["sim%", "gene1", "gene2", "Ortho", levels_col]) + "\n"
 new_pairwise_file.write(new_pairwise_header)
 

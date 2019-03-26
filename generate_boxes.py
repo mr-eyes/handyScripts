@@ -29,18 +29,12 @@ df = pd.read_csv(newPairwise_file, sep="\t")
 
 boxPlots = []
 
-print(df)
-print("---------------------")
 print("---------------------")
 
 for i in range(0, ln, 1):
-    #print("df " + str(i) +" done")
+    print("df " + str(i) +" done")
     _df = df.loc[df['L-' + str(i)] == matching]
     _sims = list(_df.iloc[0:, 0])
-    print(_df)
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    print(_sims)
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     boxPlots.append(_sims)
 
 traces = []

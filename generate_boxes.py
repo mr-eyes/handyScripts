@@ -9,7 +9,6 @@ import os
 if len(sys.argv) < 2:
     exit("python generate_boxes.py <newPairwise_tsv> <ortho/non 1/0>")
 
-
 newPairwise_file = sys.argv[1]
 matching = 1
 
@@ -44,28 +43,22 @@ for i in range(0, ln, 1):
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     boxPlots.append(_sims)
 
-exit()
-
 traces = []
-
 for i in range(len(boxPlots)):
     print("GO " + str(i) +" done")
     _name = "L-" + str(i+1)
     go_ob = go.Box(
         y=boxPlots[i],
-
         name=_name,
         marker=dict(
             color='rgb(8, 81, 156)',
         ),
-        boxpoints=True,
         boxmean=True
     )
     traces.append(go_ob)
 
 
 layout = go.Layout(
-    autosize=True,
     yaxis=dict(
         type='log',
         autorange=True
@@ -73,6 +66,6 @@ layout = go.Layout(
 )
 
 fig = dict(data=traces, layout=layout)
-plot(fig,include_plotlyjs = True, filename= file_name, auto_open=False)
+plot(fig,include_plotlyjs = True, filename= file_name, auto_open=True)
 
 #py.iplot(traces, filename='WebGLmillion')
